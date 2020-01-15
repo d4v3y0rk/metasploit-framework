@@ -5,7 +5,7 @@ module Msf::DBManager::Session
   # via the key-value pairs in the specified options.
   #
   def sessions(opts)
-    return if not active
+    return unless active
 
     ::ActiveRecord::Base.connection_pool.with_connection {
       # If we have the ID, there is no point in creating a complex query.
@@ -30,14 +30,14 @@ module Msf::DBManager::Session
   # Returns a session based on opened_time, host address, and workspace
   # (or returns nil)
   def get_session(opts)
-    return if not active
-  ::ActiveRecord::Base.connection_pool.with_connection {
-    wspace = Msf::Util::DBManager.process_opts_workspace(opts, framework)
-    addr   = opts[:addr] || opts[:address] || opts[:host] || return
-    host = get_host(:workspace => wspace, :host => addr)
-    time = opts[:opened_at] || opts[:created_at] || opts[:time] || return
-    ::Mdm::Session.find_by_host_id_and_opened_at(host.id, time)
-  }
+    return unless active
+    ::ActiveRecord::Base.connection_pool.with_connection {
+      wspace = Msf::Util::DBManager.process_opts_workspace(opts, framework)
+      addr   = opts[:addr] || opts[:address] || opts[:host] || return
+      host = get_host(:workspace => wspace, :host => addr)
+      time = opts[:opened_at] || opts[:created_at] || opts[:time] || return
+      ::Mdm::Session.find_by_host_id_and_opened_at(host.id, time)
+    }
   end
 
   # @note The Mdm::Session#desc will be truncated to 255 characters.
@@ -104,29 +104,29 @@ module Msf::DBManager::Session
   #
   # @raise ArgumentError if :host and :session are both +nil+
   def report_session(opts)
-    return if not active
+    return unless active
 
-  ::ActiveRecord::Base.connection_pool.with_connection {
-    if opts[:session]
-      session = opts[:session]
-      s = create_mdm_session_from_session(opts)
-      session.db_record = s
-    elsif opts[:host]
-      s = create_mdm_session_from_host(opts)
-    else
-      raise ArgumentError.new("Missing option :session or :host")
-    end
+    ::ActiveRecord::Base.connection_pool.with_connection {
+      if opts[:session]
+        session = opts[:session]
+        s = create_mdm_session_from_session(opts)
+        session.db_record = s
+      elsif opts[:host]
+        s = create_mdm_session_from_host(opts)
+      else
+        raise ArgumentError.new("Missing option :session or :host")
+      end
 
-    wspace = s.workspace
+      wspace = s.workspace
 
 
-    if session and session.via_exploit
-      # This is a live session, we know the host is vulnerable to something.
-      infer_vuln_from_session(session, wspace)
-    end
+      if session and session.via_exploit
+        # This is a live session, we know the host is vulnerable to something.
+        infer_vuln_from_session(session, wspace)
+      end
 
-    s
-  }
+      s
+    }
   end
 
   def report_session_host_dto(host_dto)
@@ -135,7 +135,7 @@ module Msf::DBManager::Session
   end
 
   def report_session_dto(session_dto)
-    return if not active
+    return unless active
 
     ::ActiveRecord::Base.connection_pool.with_connection {
       host_data = session_dto[:host_data]
@@ -186,7 +186,7 @@ module Msf::DBManager::Session
   # @param opts [Hash] Hash containing the updated values. Key should match the attribute to update. Must contain :id of record to update.
   # @return [Mdm::Session] The updated Mdm::Session object.
   def update_session(opts)
-    return if not active
+    return unless active
 
     ::ActiveRecord::Base.connection_pool.with_connection {
       id = opts.delete(:id)

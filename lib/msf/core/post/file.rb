@@ -286,24 +286,33 @@ module Msf::Post::File
   # @return [Array] of strings(lines)
   #
   def read_file(file_name)
-    if session.type == 'meterpreter'
-      return _read_file_meterpreter(file_name)
-    end
-
-    return nil unless session.type == 'shell'
-
     if session.platform == 'windows'
-      return session.shell_command_token("type \"#{file_name}\"")
+      return nil
     end
 
-    return nil unless readable?(file_name)
-
-    if command_exists?('cat')
-      return session.shell_command_token("cat \"#{file_name}\"")
+    unless readable?(file_name)
+      return nil
     end
 
-    # Result on systems without cat command
-    session.shell_command_token("while read line; do echo $line; done <#{file_name}")
+    case session.type
+    when /meterpreter/
+      return _read_file_meterpreter(file_name)
+    when /shell/
+      # We are in a windows shell
+      if session.platform == 'windows'
+        return session.shell_command_token("type \"#{file_name}\"")
+      end
+      # We are in a shell but not on windows
+      if command_exists?('cat')
+        return session.shell_command_token("cat \"#{file_name}\"")
+      end
+      # Result on systems without cat command
+      session.shell_command_token("while read line; do echo $line; done <#{file_name}")
+    when /powershell/
+      session.shell_command_token("Get-Content -Path #{file_name}")
+    else
+      return nil
+    end
   end
 
   # Platform-agnostic file write. Writes given object content to a remote file.

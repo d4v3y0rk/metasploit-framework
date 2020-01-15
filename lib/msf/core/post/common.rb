@@ -19,9 +19,9 @@ module Msf::Post::Common
 
   def rport
     case session.type
-    when 'meterpreter'
+    when /meterpreter/
       session.sock.peerport
-    when 'shell'
+    when /shell/
       session.session_port
     end
   end
